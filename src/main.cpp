@@ -10,6 +10,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
     ChangeWindowMode(TRUE);// ウィンドウ設定
     SetGraphMode(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 32);
     if (DxLib_Init() == -1) return -1;// DXライブラリ初期化
+
     Graphics::Init();
     SetDrawScreen(DX_SCREEN_BACK);
 
