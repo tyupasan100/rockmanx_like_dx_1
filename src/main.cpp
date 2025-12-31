@@ -8,9 +8,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
     SetOutApplicationLogValidFlag(FALSE);// ログ非表示
 
     ChangeWindowMode(TRUE);// ウィンドウ設定
-    SetGraphMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32);
-    
+    SetGraphMode(SCREEN_WIDTH * SCALE, SCREEN_HEIGHT * SCALE, 32);
     if (DxLib_Init() == -1) return -1;// DXライブラリ初期化
+    Graphics::Init();
     SetDrawScreen(DX_SCREEN_BACK);
 
     int prevTime = GetNowCount();// フレーム制御用
@@ -20,7 +20,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
     // ==============================
     while (ProcessMessage() == 0)
     {
-        ClearDrawScreen();
+        Graphics::Begin();
         // --------------------------
         // フレーム開始時間
         // --------------------------
@@ -32,6 +32,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
         // 入力更新（後で関数化）
         // --------------------------
         // GetHitKeyStateAll などをここに置く予定
+
 
         // --------------------------
         // 更新（Update）
@@ -47,7 +48,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
         player.Draw();
         DrawString(20, 20, "Game Loop Running", GetColor(255, 255, 255));
 
-
+        Graphics::End();
         ScreenFlip();
 
         // --------------------------

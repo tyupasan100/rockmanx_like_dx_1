@@ -11,6 +11,7 @@
 constexpr int SCREEN_WIDTH = 320;
 constexpr int SCREEN_HEIGHT = 180;
 constexpr int TARGET_FPS = 60;
+constexpr int SCALE = 3;
 
 // =======================
 // 列挙型・型定義
@@ -27,3 +28,4 @@ enum class GameState
 // 自作クラス
 // =======================
 #include "Player.h"
+#include "Graphics.h"

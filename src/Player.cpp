@@ -3,7 +3,7 @@
 Player::Player()
 {
     x = 100.0f;
-    y = 100.0f;
+    y = 0.0f;
     vx = 0.0f;
     vy = 0.0f;
 }
@@ -18,9 +18,9 @@ void Player::Update()
     y += vy;
 
     // ‰¼F°
-    if (y > 400.0f)
+    if (y > 150.0f)
     {
-        y = 400.0f;
+        y = 150.0f;
         vy = 0.0f;
     }
 }
@@ -30,8 +30,8 @@ void Player::Draw() const
     DrawBox(
         static_cast<int>(x),
         static_cast<int>(y),
-        static_cast<int>(x + 32),
-        static_cast<int>(y + 32),
+        static_cast<int>(x + 16),
+        static_cast<int>(y + 16),
         GetColor(255, 255, 255),
         TRUE
     );
