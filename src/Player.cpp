@@ -37,34 +37,32 @@ void Player::Update()
 
 void Player::UpdateIdle()
 {
+    int move = 0;
     vx = 0;
 
-    if (Input::Press(KEY_INPUT_LEFT))
-    {
-        vx = -3;
-        state = PlayerState::Run;
-    }
+    if (Input::Press(KEY_INPUT_LEFT))   move--;
+    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    vx = move * RUN_SPEED;
 
-    if (Input::Press(KEY_INPUT_RIGHT))
-    {
-        vx = 3;
+    if (vx != 0) {
         state = PlayerState::Run;
     }
 
     if(Input::Press(KEY_INPUT_Z))
     {
-        vy = -10;
+        vy = -JUMP_SPEED;
         state = PlayerState::Jump;
     }
 }
 
 void Player::UpdateRun()
 {
-    if (Input::Press(KEY_INPUT_LEFT))
-        vx = -3;
-    else if (Input::Press(KEY_INPUT_RIGHT))
-        vx = 3;
-    else
+    int move = 0;
+    if (Input::Press(KEY_INPUT_LEFT))   move--;
+    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    vx = move * RUN_SPEED;
+
+    if(vx == 0)
     {
         vx = 0;
         state = PlayerState::Idle;
@@ -72,14 +70,19 @@ void Player::UpdateRun()
 
     if (Input::Trigger(KEY_INPUT_Z))
     {
-        vy = -10;
+        vy = -JUMP_SPEED;
         state = PlayerState::Jump;
     }
 }
 
 void Player::UpdateJump()
 {
-    vy += 0.6f; // d—Í
+    vy += GRAVITY; // d—Í
+
+    int move = 0;
+    if (Input::Press(KEY_INPUT_LEFT))   move--;
+    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    vx = move * RUN_SPEED;
 
     if (vy > 0)
         state = PlayerState::Fall;
@@ -87,10 +90,16 @@ void Player::UpdateJump()
 
 void Player::UpdateFall()
 {
-    vy += 0.6f;
-    if (vy > 10) {
-        vy = 10;
+    vy += GRAVITY;
+    if (vy > JUMP_SPEED) {
+        vy = JUMP_SPEED;
     }
+
+    int move = 0;
+    if (Input::Press(KEY_INPUT_LEFT))   move--;
+    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    vx = move * RUN_SPEED;
+
     if (y > 150)
     {
         vy = 0;

@@ -22,6 +22,11 @@ constexpr int KEY_GIGHT = KEY_INPUT_RIGHT;
 constexpr int KEY_JUNP = KEY_INPUT_Z;
 constexpr int KEY_SHOT = KEY_INPUT_X;
 
+//player
+constexpr int RUN_SPEED = 2;
+constexpr int JUMP_SPEED = 10;
+constexpr float GRAVITY = 0.6f;
+
 
 // =======================
 // óÒãìå^ÅEå^íËã`
