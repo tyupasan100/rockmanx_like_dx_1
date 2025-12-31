@@ -26,12 +26,21 @@ constexpr int KEY_SHOT = KEY_INPUT_X;
 // =======================
 // —ñ‹“Œ^EŒ^’è‹`
 // =======================
+//seane
 enum class GameState
 {
     Title,
     Playing,
     Pause,
     GameOver
+};
+
+//player
+enum class PlayerState {
+    Idle,
+    Run,
+    Jump,
+    Fall
 };
 
 // =======================

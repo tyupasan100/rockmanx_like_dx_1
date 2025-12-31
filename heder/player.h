@@ -9,6 +9,14 @@ public:
     void Draw() const;
 
 private:
+
+    void UpdateIdle();  //—§‚¿ó‘Ô
+    void UpdateRun();   //‘–‚èó‘Ô
+    void UpdateJump();  //ƒWƒƒƒ“ƒvó‘Ô
+    void UpdateFall();  //—‚¿ó‘Ô
+
+    PlayerState state;  //playeró‘Ô
+
     // ˆÊ’u
     float x;
     float y;
