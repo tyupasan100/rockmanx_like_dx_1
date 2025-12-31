@@ -136,16 +136,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Graphics.cpp" />
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\design.md" />
     <None Include="docs\git.md" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heder\Common.h" />
     <ClInclude Include="heder\Graphics.h" />
+    <ClInclude Include="heder\Input.h" />
     <ClInclude Include="heder\Player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

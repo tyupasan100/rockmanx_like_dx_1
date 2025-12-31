@@ -33,6 +33,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
         // 入力更新（後で関数化）
         // --------------------------
         // GetHitKeyStateAll などをここに置く予定
+        Input::Update();
 
 
         // --------------------------
@@ -47,6 +48,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
         // 描画（Draw）
         // --------------------------
         player.Draw();
+        if (Input::Trigger(KEY_LEFT)) { DrawString(20, 40, "trigger", GetColor(255, 255, 255)); }
+        if (Input::Press(KEY_LEFT)) { DrawString(20, 60, "press", GetColor(255, 255, 255)); }
+        if (Input::Release(KEY_LEFT)) { DrawString(20, 80, "release", GetColor(255, 255, 255)); }
         DrawString(20, 20, "Game Loop Running", GetColor(255, 255, 255));
 
         Graphics::End();

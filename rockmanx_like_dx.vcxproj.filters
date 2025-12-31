@@ -27,12 +27,18 @@
     <ClCompile Include="src\Graphics.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="docs\design.md">
       <Filter>docs</Filter>
     </None>
     <None Include="docs\git.md">
+      <Filter>docs</Filter>
+    </None>
+    <None Include="README.md">
       <Filter>docs</Filter>
     </None>
   </ItemGroup>
@@ -44,6 +50,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="heder\Player.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="heder\Input.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

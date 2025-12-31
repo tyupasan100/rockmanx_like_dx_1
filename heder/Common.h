@@ -8,10 +8,20 @@
 // =======================
 // ’è”Eİ’è
 // =======================
+//main
 constexpr int SCREEN_WIDTH = 320;
 constexpr int SCREEN_HEIGHT = 180;
 constexpr int TARGET_FPS = 60;
-constexpr int SCALE = 3;
+
+//graphics
+constexpr int SCALE = 3;           //‰æ–Ê‚Ì®””{ 
+
+//input
+constexpr int KEY_LEFT = KEY_INPUT_LEFT;
+constexpr int KEY_GIGHT = KEY_INPUT_RIGHT;
+constexpr int KEY_JUNP = KEY_INPUT_Z;
+constexpr int KEY_SHOT = KEY_INPUT_X;
+
 
 // =======================
 // —ñ‹“Œ^EŒ^’è‹`
@@ -29,3 +39,4 @@ enum class GameState
 // =======================
 #include "Player.h"
 #include "Graphics.h"
+#include "Input.h"
