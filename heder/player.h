@@ -14,8 +14,12 @@ private:
     void UpdateRun();   //‘–‚èó‘Ô
     void UpdateJump();  //ƒWƒƒƒ“ƒvó‘Ô
     void UpdateFall();  //—‚¿ó‘Ô
+    void UpdateDash();
+
+    
 
     PlayerState state;  //playeró‘Ô
+    Facing facing;
 
     // ˆÊ’u
     float x;

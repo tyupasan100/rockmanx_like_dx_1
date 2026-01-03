@@ -21,6 +21,7 @@ constexpr int KEY_LEFT = KEY_INPUT_LEFT;
 constexpr int KEY_GIGHT = KEY_INPUT_RIGHT;
 constexpr int KEY_JUNP = KEY_INPUT_Z;
 constexpr int KEY_SHOT = KEY_INPUT_X;
+constexpr int KEY_DASH = KEY_INPUT_LSHIFT;
 
 //player
 constexpr int RUN_SPEED = 2;
@@ -45,7 +46,13 @@ enum class PlayerState {
     Idle,
     Run,
     Jump,
-    Fall
+    Fall,
+    Dash
+};
+
+enum class Facing {
+    Left,
+    Right
 };
 
 // =======================
