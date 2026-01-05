@@ -8,46 +8,69 @@ Player::Player()
     vy = 0.0f;
     state = PlayerState::Idle;
     facing = Facing::Right;
+    isGround = true;
 }
 
 void Player::Update()
 {
     // 仮：重力だけ
+    HandleCommonTransition();
 
     switch (state)
     {
-    case PlayerState::Idle:
-        UpdateIdle();
-        break;
-    case PlayerState::Run:
-        UpdateRun();
-        break;
-    case PlayerState::Jump:
-        UpdateJump();
-        break;
-    case PlayerState::Fall:
-        UpdateFall();
-        break;
-    case PlayerState::Dash:
-        UpdateDash();
-        break;
+    case PlayerState::Idle: UpdateIdle();   break;
+    case PlayerState::Run:  UpdateRun();    break;
+    case PlayerState::Jump: UpdateJump();   break;
+    case PlayerState::Fall: UpdateFall();   break;
+    case PlayerState::Dash: UpdateDash();   break;
     }
+
+    ApplyMovement();
+}
+
+void Player::HandleCommonTransition()
+{
+    move = 0;
+    if (Input::Press(KEY_INPUT_LEFT))   move--;
+    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    if (move < 0) facing = Facing::Left;
+    if (move > 0) facing = Facing::Right;
+
+
+}
+
+void Player::ApplyMovement()
+{
+    isGround = false;
+    if (!isGround) vy += GRAVITY;
+
+    if (vy > MAX_FALL_SPEED) vy = MAX_FALL_SPEED;
 
     x += vx;
     y += vy;
+
+    ResolveGroundCollision();
 }
+
+void Player::ResolveGroundCollision()
+{
+    if (y > 150)
+    {
+        vy = 0;
+        y = 150;
+        isGround = true;
+
+        if (state == PlayerState::Fall) {
+            state == PlayerState::Idle;
+        }
+    }
+}
+
 
 void Player::UpdateIdle()
 {
-    int move = 0;
     vx = 0;
-
-    if (Input::Press(KEY_INPUT_LEFT))   move--;
-    if (Input::Press(KEY_INPUT_RIGHT))  move++;
     vx = move * RUN_SPEED;
-
-    if (move < 0) facing = Facing::Left;
-    if (move > 0) facing = Facing::Right;
 
 
     if (vx != 0) {
@@ -63,13 +86,8 @@ void Player::UpdateIdle()
 
 void Player::UpdateRun()
 {
-    int move = 0;
-    if (Input::Press(KEY_INPUT_LEFT))   move--;
-    if (Input::Press(KEY_INPUT_RIGHT))  move++;
     vx = move * RUN_SPEED;
 
-    if (move < 0) facing = Facing::Left;
-    if (move > 0) facing = Facing::Right;
 
 
     if(vx == 0)
@@ -92,15 +110,10 @@ void Player::UpdateRun()
 
 void Player::UpdateJump()
 {
-    vy += GRAVITY; // 重力
 
-    int move = 0;
-    if (Input::Press(KEY_INPUT_LEFT))   move--;
-    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+
+    move = 0;
     vx = move * RUN_SPEED;
-
-    if (move < 0) facing = Facing::Left;
-    if (move > 0) facing = Facing::Right;
 
 
     if (vy > 0)
@@ -109,33 +122,19 @@ void Player::UpdateJump()
 
 void Player::UpdateFall()
 {
-    vy += GRAVITY;
+
     if (vy > JUMP_SPEED) {
         vy = JUMP_SPEED;
     }
 
-    int move = 0;
-    if (Input::Press(KEY_INPUT_LEFT))   move--;
-    if (Input::Press(KEY_INPUT_RIGHT))  move++;
+    move = 0;
     vx = move * RUN_SPEED;
 
-    if (move < 0) facing = Facing::Left;
-    if (move > 0) facing = Facing::Right;
-
-
-    if (y > 150)
-    {
-        vy = 0;
-        y = 150;
-        state = PlayerState::Idle;
-    }
 }
 
 void Player::UpdateDash()
 {
-    int move = 0;
-    if (Input::Press(KEY_INPUT_LEFT))  move--;
-    if (Input::Press(KEY_INPUT_RIGHT)) move++;
+    move = 0;
 
     if (move == 0)
     {
@@ -143,10 +142,6 @@ void Player::UpdateDash()
         state = PlayerState::Idle;
         return;
     }
-
-    // 向き更新
-    if (move < 0) facing = Facing::Left;
-    if (move > 0) facing = Facing::Right;
 
     vx = move * 6; // ダッシュ速度
 

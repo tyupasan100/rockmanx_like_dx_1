@@ -25,7 +25,8 @@ constexpr int KEY_DASH = KEY_INPUT_LSHIFT;
 
 //player
 constexpr int RUN_SPEED = 2;
-constexpr int JUMP_SPEED = 10;
+constexpr int JUMP_SPEED = 8;
+constexpr int MAX_FALL_SPEED = 7;
 constexpr float GRAVITY = 0.6f;
 
 

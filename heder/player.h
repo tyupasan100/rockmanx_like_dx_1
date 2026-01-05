@@ -14,9 +14,12 @@ private:
     void UpdateRun();   //走り状態
     void UpdateJump();  //ジャンプ状態
     void UpdateFall();  //落ち状態
-    void UpdateDash();
+    void UpdateDash();  //ダッシュ状態
 
-    
+    void ApplyMovement();
+    void HandleCommonTransition();
+    void ResolveGroundCollision();
+
 
     PlayerState state;  //player状態
     Facing facing;
@@ -28,4 +31,8 @@ private:
     // 速度
     float vx;
     float vy;
+    int move;
+
+    bool isGround;
+    
 };
