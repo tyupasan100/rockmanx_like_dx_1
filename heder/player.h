@@ -31,8 +31,15 @@ private:
     // 速度
     float vx;
     float vy;
+    float sx;
     int move;
 
-    bool isGround;
+    //プレイヤーフラグ
+    bool isGround;  //接地
+    bool canDash;
+
+    //プレイヤータイマー
+    int dashTimer;
     
+
 };

@@ -19,13 +19,15 @@ constexpr int SCALE = 3;           //âÊñ ÇÃêÆêîî{
 //input
 constexpr int KEY_LEFT = KEY_INPUT_LEFT;
 constexpr int KEY_GIGHT = KEY_INPUT_RIGHT;
-constexpr int KEY_JUNP = KEY_INPUT_Z;
-constexpr int KEY_SHOT = KEY_INPUT_X;
-constexpr int KEY_DASH = KEY_INPUT_LSHIFT;
+constexpr int KEY_JUMP = KEY_INPUT_Z;
+constexpr int KEY_SHOT = KEY_INPUT_C;
+constexpr int KEY_DASH = KEY_INPUT_X;
 
 //player
 constexpr int RUN_SPEED = 2;
+constexpr int DASH_SPEED = 5;
 constexpr int JUMP_SPEED = 8;
+constexpr int DASH_DURATION = 30;
 constexpr int MAX_FALL_SPEED = 7;
 constexpr float GRAVITY = 0.6f;
 
