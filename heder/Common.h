@@ -27,9 +27,16 @@ constexpr int KEY_DASH = KEY_INPUT_X;
 constexpr int RUN_SPEED = 2;
 constexpr int DASH_SPEED = 5;
 constexpr int JUMP_SPEED = 8;
-constexpr int DASH_DURATION = 30;
+constexpr int DASH_DURATION = 20;
 constexpr int MAX_FALL_SPEED = 7;
+constexpr int PLAYER_HEIGHT = 16;
+constexpr int PLAYER_WIDTH = 16;
 constexpr float GRAVITY = 0.6f;
+
+//map
+constexpr int TILE_SIZE = 16;
+constexpr int MAP_W = SCREEN_WIDTH / TILE_SIZE;
+constexpr int MAP_H = SCREEN_HEIGHT / TILE_SIZE;
 
 
 // =======================
@@ -64,3 +71,4 @@ enum class Facing {
 #include "Player.h"
 #include "Graphics.h"
 #include "Input.h"
+#include "Map.h"

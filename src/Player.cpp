@@ -7,15 +7,17 @@ Player::Player()
     vx = 0.0f;
     sx = 0.0f;
     vy = 0.0f;
+    move = 0;
     state = PlayerState::Idle;
     facing = Facing::Right;
-    isGround = true;
+    isGround = false;
     canDash = true;
     dashTimer = 0;
 }
 
-void Player::Update()
+void Player::Update(const Map& map)
 {
+    isGround = CheckOnGround(map);
     // 仮：重力だけ
     HandleCommonTransition();
 
@@ -28,7 +30,7 @@ void Player::Update()
     case PlayerState::Dash: UpdateDash();   break;
     }
 
-    ApplyMovement();
+    ApplyMovement(map);
 }
 
 void Player::HandleCommonTransition()
@@ -64,7 +66,6 @@ void Player::HandleCommonTransition()
         }
     }
 
-
     if (dashTimer <= 0 && isGround && (!Input::Press(KEY_DASH)))
     {
         canDash = true;
@@ -79,49 +80,111 @@ void Player::HandleCommonTransition()
 
     if (vy > 0)
     {
+        dashTimer = 0;
         state = PlayerState::Fall;
     }
 
     
 }
 
-void Player::ApplyMovement()
+void Player::ApplyMovement(const Map& map)
 {
-    isGround = false;
-
-
     if (!isGround) vy += GRAVITY;
-
     if (vy > MAX_FALL_SPEED) vy = MAX_FALL_SPEED;
 
     if (state == PlayerState::Dash)
     {
         x += vx;
-        y += vy;
     }
     else
     {
-        x += sx * move;
-        y += vy;
+        vx = sx * move;
+        x += vx;
     }
 
-    ResolveGroundCollision();
+    ResolveWallCollision(map);
+
+    y += vy;
+
+    ResolveGroundCollision(map);
+}
+ 
+bool Player::CheckOnGround(const Map& map)
+{
+    const int footY = y + PLAYER_HEIGHT;
+
+    const int leftX = x + 2;
+    const int rightX = x + PLAYER_WIDTH - 2;
+
+    if (map.IsBlockAtPixel(leftX, footY))  return true;
+    if (map.IsBlockAtPixel(rightX, footY)) return true;
+
+    return false;
 }
 
-void Player::ResolveGroundCollision()
+void Player::ResolveWallCollision(const Map& map)
 {
-    if (y > 150)
+    if (vx == 0) return;
+
+    const int topY = y + 2;
+    const int bottomY = y + PLAYER_HEIGHT - 2;
+
+    if (vx > 0)
     {
-        vy = 0;
-        y = 150;
-        isGround = true;
+        // 右壁
+        int rightX = x + PLAYER_WIDTH;
+
+        if (map.IsBlockAtPixel(rightX, topY) ||
+            map.IsBlockAtPixel(rightX, bottomY))
+        {
+            int tileX = (rightX / TILE_SIZE) * TILE_SIZE;
+            x = tileX - PLAYER_WIDTH;
+            vx = 0;
+            dashTimer = 0;
+        }
     }
+    else
+    {
+        // 左壁
+        int leftX = x;
+
+        if (map.IsBlockAtPixel(leftX, topY) ||
+            map.IsBlockAtPixel(leftX, bottomY))
+        {
+            int tileX = (leftX / TILE_SIZE + 1) * TILE_SIZE;
+            x = tileX;
+            vx = 0;
+            dashTimer = 0;
+        }
+    }
+}
+
+
+void Player::ResolveGroundCollision(const Map& map)
+{
+    if (vy <= 0)return; //落下中のみ
+
+    int footY = y + PLAYER_HEIGHT;
+
+    // 左右のチェック点
+    int leftX = x + 2;
+    int rightX = x + PLAYER_WIDTH - 2;
+
+    if (!map.IsBlockAtPixel(leftX, footY) &&
+        !map.IsBlockAtPixel(rightX, footY))
+        return;
+
+    int tileY = (footY / TILE_SIZE) * TILE_SIZE;
+
+    y = tileY - PLAYER_HEIGHT;
+    vy = 0;
+    isGround = true;
 }
 
 
 void Player::UpdateIdle()
 {
-    sx = 0;
+    sx = RUN_SPEED;
 }
 
 void Player::UpdateRun()
@@ -131,15 +194,10 @@ void Player::UpdateRun()
 
 void Player::UpdateJump()
 {
-
 }
 
 void Player::UpdateFall()
 {
-
-    if (vy > JUMP_SPEED) {
-        vy = JUMP_SPEED;
-    }
 }
 
 void Player::UpdateDash()
@@ -154,7 +212,7 @@ void Player::UpdateDash()
 }
 
 
-void Player::Draw() const
+void Player::DrawPlayer() const
 {
     if (state == PlayerState::Idle)DrawString(20, 40, "idle", GetColor(255, 255, 255));
     if (state == PlayerState::Run)DrawString(20, 40, "run", GetColor(255, 255, 255));
@@ -167,12 +225,21 @@ void Player::Draw() const
 
     DrawFormatString(20, 80, GetColor(255, 255, 255) , "%d", dashTimer);
     
+    DrawBox(
+        static_cast<int>(x),
+        static_cast<int>(y),
+        static_cast<int>(x + 16),
+        static_cast<int>(y + 16),
+        GetColor(255, 255, 255),
+        TRUE
+    );
+
     if (facing == Facing::Right)
     {
         DrawCircle(
             static_cast<int>(x + 16),
             static_cast<int>(y),
-            3,
+            2,
             GetColor(255, 0, 0),
             true,
             true
@@ -183,18 +250,13 @@ void Player::Draw() const
         DrawCircle(
             static_cast<int>(x),
             static_cast<int>(y),
-            3,
+            2,
             GetColor(255, 0, 0),
             true,
             true
         );
     }
-    DrawBox(
-        static_cast<int>(x),
-        static_cast<int>(y),
-        static_cast<int>(x + 16),
-        static_cast<int>(y + 16),
-        GetColor(255, 255, 255),
-        TRUE
-    );
+    
+    DrawCircle(static_cast<int>(x + 2), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x + PLAYER_WIDTH - 2), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
 }

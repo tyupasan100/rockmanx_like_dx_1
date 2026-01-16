@@ -16,6 +16,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
 
     int prevTime = GetNowCount();// フレーム制御用
     Player player;
+    Map map;
     // ==============================
     // メインループ
     // ==============================
@@ -42,12 +43,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int){
         // プレイヤー更新
         // 当たり判定
         // 状態遷移
-        player.Update();
+        player.Update(map);
 
         // --------------------------
         // 描画（Draw）
         // --------------------------
-        player.Draw();
+        player.DrawPlayer();
+        map.DrawMap();
         DrawString(20, 20, "Game Loop Running", GetColor(255, 255, 255));
 
         Graphics::End();

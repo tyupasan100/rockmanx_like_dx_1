@@ -1,12 +1,14 @@
 #pragma once
 
+class Map;
+
 class Player
 {
 public:
     Player();
 
-    void Update();
-    void Draw() const;
+    void Update(const Map& map);
+    void DrawPlayer() const;
 
 private:
 
@@ -16,9 +18,11 @@ private:
     void UpdateFall();  //—‚¿ó‘Ô
     void UpdateDash();  //ƒ_ƒbƒVƒ…ó‘Ô
 
-    void ApplyMovement();
+    void ApplyMovement(const Map& map);
     void HandleCommonTransition();
-    void ResolveGroundCollision();
+    void ResolveGroundCollision(const Map& map);
+    void ResolveWallCollision(const Map& map);
+    bool CheckOnGround(const Map& map);
 
 
     PlayerState state;  //playeró‘Ô
