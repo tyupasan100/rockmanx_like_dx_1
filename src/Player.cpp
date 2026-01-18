@@ -3,7 +3,9 @@
 Player::Player()
 {
     x = 100.0f;
-    y = 0.0f;
+    y = 50.0f;
+    prevY = 0.0;
+    prevX = 0.0;
     vx = 0.0f;
     sx = 0.0f;
     vy = 0.0f;
@@ -17,7 +19,6 @@ Player::Player()
 
 void Player::Update(const Map& map)
 {
-    isGround = CheckOnGround(map);
     // 仮：重力だけ
     HandleCommonTransition();
 
@@ -44,8 +45,8 @@ void Player::HandleCommonTransition()
 
     if (state != PlayerState::Dash)
     {
-        if (Input::Press(KEY_INPUT_LEFT))   move--;
-        if (Input::Press(KEY_INPUT_RIGHT))  move++;
+        if (Input::Press(KEY_LEFT))   move--;
+        if (Input::Press(KEY_RIGHT))  move++;
         if (move < 0) facing = Facing::Left;
         if (move > 0) facing = Facing::Right;
 
@@ -58,7 +59,7 @@ void Player::HandleCommonTransition()
             state = PlayerState::Run;
         }
 
-        if (isGround && canDash && Input::Press(KEY_INPUT_X))
+        if (isGround && canDash && Input::Press(KEY_DASH))
         {
             dashTimer = DASH_DURATION;
             canDash = false;
@@ -83,15 +84,21 @@ void Player::HandleCommonTransition()
         dashTimer = 0;
         state = PlayerState::Fall;
     }
-
-    
 }
 
 void Player::ApplyMovement(const Map& map)
 {
+    
     if (!isGround) vy += GRAVITY;
     if (vy > MAX_FALL_SPEED) vy = MAX_FALL_SPEED;
 
+    prevY = y;
+    y += vy;
+
+    ResolveGroundCollision(map);
+    ResolveDashGroundSnap(map);
+
+    prevX = x;
     if (state == PlayerState::Dash)
     {
         x += vx;
@@ -103,31 +110,31 @@ void Player::ApplyMovement(const Map& map)
     }
 
     ResolveWallCollision(map);
-
-    y += vy;
-
-    ResolveGroundCollision(map);
 }
  
 bool Player::CheckOnGround(const Map& map)
 {
     const int footY = y + PLAYER_HEIGHT;
 
-    const int leftX = x + 2;
-    const int rightX = x + PLAYER_WIDTH - 2;
+    const int leftX = x + FOOT_RESPITE;
+    const int rightX = x + PLAYER_WIDTH - FOOT_RESPITE;
 
-    if (map.IsBlockAtPixel(leftX, footY))  return true;
-    if (map.IsBlockAtPixel(rightX, footY)) return true;
+    int gL = map.GetGroundY(leftX, footY);
+    int gR = map.GetGroundY(rightX, footY);
+
+    if (gL > 0 && gL <= footY) return true;
+    if (gR > 0 && gR <= footY) return true;
 
     return false;
 }
 
 void Player::ResolveWallCollision(const Map& map)
 {
+
     if (vx == 0) return;
 
     const int topY = y + 2;
-    const int bottomY = y + PLAYER_HEIGHT - 2;
+    const int bottomY = y + PLAYER_HEIGHT - 6;
 
     if (vx > 0)
     {
@@ -159,26 +166,141 @@ void Player::ResolveWallCollision(const Map& map)
     }
 }
 
-
 void Player::ResolveGroundCollision(const Map& map)
 {
-    if (vy <= 0)return; //落下中のみ
+    isGround = CheckOnGround(map);
+    if (vy < 0)
+    {
+        return; //落下中のみ.
+    }
+
+    // チェックのベース点.
+    int prevFootY = prevY + PLAYER_HEIGHT;
+    int currFootY = y + PLAYER_HEIGHT;
+
+    // 左右のチェック点.
+    int leftX = x + FOOT_RESPITE;
+    int rightX = x + PLAYER_WIDTH - FOOT_RESPITE;
+    /*
+    //sweep
+    int bestSweepGroundY = -1;
+    // sweep 範囲（足の通過した X 範囲）
+    int sweepLeft = min(prevX + FOOT_RESPITE, x + FOOT_RESPITE);
+    int sweepRight = max(prevX + PLAYER_WIDTH - FOOT_RESPITE,
+        x + PLAYER_WIDTH - FOOT_RESPITE);
+    // 横方向 sweep
+    for (int px = sweepLeft; px <= sweepRight; px++)
+    {
+        // 少し上まで見る（斜面・段差用）
+        int g = map.GetGroundY(px, currFootY);
+        if (g >= 0)
+        {
+            if (bestSweepGroundY < 0)
+                bestSweepGroundY = g;
+            else
+                bestSweepGroundY = min(bestSweepGroundY, g);
+        }
+    }
+
+    //初期化.
+    int gL = bestSweepGroundY;
+    int gR = bestSweepGroundY;
+    */
+    //初期化.
+    int gL = -1;
+    int gR = -1;
+
+    //少し上まで見る.
+    for (int offset = 0; offset <= MAX_STEP_HEIGHT; offset++)
+    {
+        //左右の足のyを取得する.
+        int checkY = currFootY - offset;
+        int groundYL = map.GetGroundY(leftX, checkY);
+        int groundYR = map.GetGroundY(rightX, checkY);
+
+        //高い位置のyを保存.
+        if (gL < 0)gL = groundYL;
+        else if (groundYL > 0) gL = min(gL, groundYL);
+
+        if (gR < 0)gR = groundYR;
+        else if (groundYR > 0) gR = min(gR, groundYR);
+    }
+
+    test1 = gL;
+    test2 = gR;
+
+    //どちらが高いかの検出.
+    int targetFootY = -1;
+    if (gL > 0 && gR > 0)targetFootY = min(gL, gR);
+    else targetFootY = max(gL, gR);
+
+    //距離によってどうか.
+    if (targetFootY >= 0)
+    {
+        int targetY = targetFootY - PLAYER_HEIGHT;
+        int step = y - targetY;
+        if (currFootY >= targetFootY)
+        {
+            y = targetY;
+            vy = 0;
+            isGround = true;
+            return;
+        }
+        /*
+        if (step > 0 && step <= MAX_STEP_HEIGHT)
+        {
+            y -= step;
+            vy = 0;
+            isGround = true;
+            return;
+        }
+        */
+    }
+}
+
+void Player::ResolveDashGroundSnap(const Map& map)
+{
+    // 上昇中・ジャンプ中は吸いつかせない
+    if (vy < 0) return;
 
     int footY = y + PLAYER_HEIGHT;
 
-    // 左右のチェック点
-    int leftX = x + 2;
-    int rightX = x + PLAYER_WIDTH - 2;
+    int leftX = x + FOOT_RESPITE;
+    int rightX = x + PLAYER_WIDTH - FOOT_RESPITE;
 
-    if (!map.IsBlockAtPixel(leftX, footY) &&
-        !map.IsBlockAtPixel(rightX, footY))
-        return;
+    int gL = -1;
+    int gR = -1;
 
-    int tileY = (footY / TILE_SIZE) * TILE_SIZE;
+    for (int offset = -MAX_STEP_HEIGHT; offset <= MAX_STEP_HEIGHT; offset++)
+    {
+        //左右の足のyを取得する.
+        int checkY = footY - offset;
+        int groundYL = map.GetGroundY(leftX, checkY);
+        int groundYR = map.GetGroundY(rightX, checkY);
 
-    y = tileY - PLAYER_HEIGHT;
-    vy = 0;
-    isGround = true;
+        //高い位置のyを保存.
+        if (gL < 0)gL = groundYL;
+        else if (groundYL > 0) gL = min(gL, groundYL);
+
+        if (gR < 0)gR = groundYR;
+        else if (groundYR > 0) gR = min(gR, groundYR);
+    }
+
+    int targetFootY = -1;
+    if (gL >= 0 && gR >= 0) targetFootY = min(gL, gR);
+    else targetFootY = max(gL, gR);
+
+    if (targetFootY < 0) return;
+
+    int delta = targetFootY - footY;
+
+    // 「少し下にある地面だけ」吸いつく
+    if (delta >= 0 && delta <= MAX_STEP_HEIGHT)
+    {
+        y += delta;
+        vy = 0;
+        isGround = true;
+    }
 }
 
 
@@ -219,44 +341,33 @@ void Player::DrawPlayer() const
     if (state == PlayerState::Fall)DrawString(20, 40, "fall", GetColor(255, 255, 255));
     if (state == PlayerState::Jump)DrawString(20, 40, "jump", GetColor(255, 255, 255));
     if (state == PlayerState::Dash)DrawString(20, 40, "dash", GetColor(255, 255, 255));
-    
     if(canDash)DrawString(20, 60, "true", GetColor(255, 255, 255));
     else DrawString(20, 60, "false", GetColor(255, 255, 255));
-
+    if (isGround)DrawString(20, 100, "true", GetColor(255, 255, 255));
+    else DrawString(20, 100, "false", GetColor(255, 255, 255));
     DrawFormatString(20, 80, GetColor(255, 255, 255) , "%d", dashTimer);
+    DrawFormatString(60, 80, GetColor(255, 255, 255), "%d", test1);
+    DrawFormatString(100, 80, GetColor(255, 255, 255), "%d", test2);
     
-    DrawBox(
-        static_cast<int>(x),
-        static_cast<int>(y),
-        static_cast<int>(x + 16),
-        static_cast<int>(y + 16),
-        GetColor(255, 255, 255),
-        TRUE
-    );
 
-    if (facing == Facing::Right)
+    DrawBox(static_cast<int>(x), static_cast<int>(y), static_cast<int>(x + 16), static_cast<int>(y + 16), GetColor(255, 255, 255), TRUE);
+
+    if (facing == Facing::Right)//キャラの向き
     {
-        DrawCircle(
-            static_cast<int>(x + 16),
-            static_cast<int>(y),
-            2,
-            GetColor(255, 0, 0),
-            true,
-            true
-        );
+        DrawCircle(static_cast<int>(x + 16), static_cast<int>(y), 1, GetColor(255, 0, 0), true, true);
     }
     if (facing == Facing::Left)
     {
-        DrawCircle(
-            static_cast<int>(x),
-            static_cast<int>(y),
-            2,
-            GetColor(255, 0, 0),
-            true,
-            true
-        );
+        DrawCircle(static_cast<int>(x), static_cast<int>(y), 1, GetColor(255, 0, 0), true, true);
     }
     
-    DrawCircle(static_cast<int>(x + 2), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
-    DrawCircle(static_cast<int>(x + PLAYER_WIDTH - 2), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x + FOOT_RESPITE), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x + PLAYER_WIDTH - FOOT_RESPITE), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x + PLAYER_WIDTH / 2), static_cast<int>(y + PLAYER_HEIGHT), 1, GetColor(0, 255, 255), true, true);
+    
+    DrawCircle(static_cast<int>(x), static_cast<int>(y + 2), 1, GetColor(255, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x), static_cast<int>(y + PLAYER_HEIGHT - 4), 1, GetColor(255, 255, 0), true, true);
+    
+    DrawCircle(static_cast<int>(x + PLAYER_WIDTH), static_cast<int>(y + 2), 1, GetColor(255, 255, 0), true, true);
+    DrawCircle(static_cast<int>(x + PLAYER_WIDTH), static_cast<int>(y + PLAYER_HEIGHT - 4), 1, GetColor(255, 255, 0), true, true);
 }

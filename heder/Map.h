@@ -7,8 +7,10 @@ public:
 	Map();
 
 	bool IsBlockAtPixel(int px, int py) const;
+	int	 GetGroundY(int px, int py) const;
+	int  GetGroundX(int px, int py) const;
 	void DrawMap() const;
 
 private:
-	int tiles[MAP_H][MAP_W];
+	TileType tiles[MAP_H][MAP_W];
 };

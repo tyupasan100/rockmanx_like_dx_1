@@ -22,6 +22,7 @@ private:
     void HandleCommonTransition();
     void ResolveGroundCollision(const Map& map);
     void ResolveWallCollision(const Map& map);
+    void ResolveDashGroundSnap(const Map& map);
     bool CheckOnGround(const Map& map);
 
 
@@ -31,6 +32,8 @@ private:
     // 位置
     float x;
     float y;
+    float prevY;
+    float prevX;
 
     // 速度
     float vx;
@@ -44,6 +47,10 @@ private:
 
     //プレイヤータイマー
     int dashTimer;
+
+    //test value
+    int test1;
+    int test2;
     
 
 };
