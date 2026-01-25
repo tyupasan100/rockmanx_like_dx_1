@@ -6,36 +6,63 @@
 #include "DxLib.h"
 
 // =======================
+// テンプレート関数
+// =======================
+template <typename T>
+
+constexpr T Clamp(T value, T minVal, T maxVal)
+{
+    if (value < minVal) return minVal;
+    if (value > maxVal) return maxVal;
+    return value;
+}
+
+// =======================
 // 定数・設定
 // =======================
-//main
+//main.
 constexpr int SCREEN_WIDTH = 320;
 constexpr int SCREEN_HEIGHT = 240;
 constexpr int TARGET_FPS = 60;
 
-//graphics
-constexpr int SCALE = 3;           //画面の整数倍 
+//graphics.
+constexpr int SCALE = 3;           //画面の整数倍 .
 
-//input
+//input.
 constexpr int KEY_LEFT = KEY_INPUT_LEFT;
 constexpr int KEY_RIGHT = KEY_INPUT_RIGHT;
 constexpr int KEY_JUMP = KEY_INPUT_Z;
 constexpr int KEY_SHOT = KEY_INPUT_C;
 constexpr int KEY_DASH = KEY_INPUT_X;
 
-//player
+//player.
+constexpr int PLAYER_HEIGHT = 16;
+constexpr int PLAYER_WIDTH = 16;
+
+//player speed.
 constexpr float RUN_SPEED = 1.0f;
 constexpr float DASH_SPEED = 2.5;
 constexpr float JUMP_SPEED = 5.5f;
-constexpr int DASH_DURATION = 30;
 constexpr float MAX_FALL_SPEED = 6.5f;
-constexpr int PLAYER_HEIGHT = 16;
-constexpr int PLAYER_WIDTH = 16;
+constexpr float WALL_SLIDE_SPEED = 1.0f;
+constexpr float WALL_JUMP_X_SPEED = 2.5;
+constexpr float WALL_JUMP_Y_SPEED = 5.5f;
+constexpr float AIR_MAX_SPEED = DASH_SPEED;
+constexpr float AIR_ACCEL = 0.2f;
+constexpr float AIR_DRAG = 0.98f;
 constexpr float GRAVITY = 0.32f;
-constexpr int MAX_STEP_HEIGHT = 4;
-constexpr int FOOT_RESPITE = 2;
 
-//map
+//player timer.
+constexpr int DASH_DURATION = 30;
+constexpr int WALL_JUMP_LOCK_FRAMES = 5; //今後消すかも.
+
+//player size.
+constexpr int DASH_SNAP_HEIGHT = 4;
+constexpr int NORMAL_SNAP_HEIGHT = 1;
+constexpr int MAX_STEP_HEIGHT = 4;
+constexpr int RESPITE = 2;
+
+//map.
 constexpr int TILE_SIZE = 16;
 constexpr int MAP_W = SCREEN_WIDTH / TILE_SIZE;
 constexpr int MAP_H = SCREEN_HEIGHT / TILE_SIZE;
@@ -44,7 +71,7 @@ constexpr int MAP_H = SCREEN_HEIGHT / TILE_SIZE;
 // =======================
 // 列挙型・型定義
 // =======================
-//seane
+//seane.
 enum class GameState
 {
     Title,
@@ -53,14 +80,15 @@ enum class GameState
     GameOver
 };
 
-//player
+//player.
 enum class PlayerState 
 {
     Idle,
     Run,
     Jump,
     Fall,
-    Dash
+    Dash,
+    Wall
 };
 
 enum class Facing 
@@ -69,7 +97,7 @@ enum class Facing
     Right
 };
 
-//map
+//map.
 enum class TileType
 {
     Air,

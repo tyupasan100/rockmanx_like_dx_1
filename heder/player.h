@@ -17,13 +17,17 @@ private:
     void UpdateJump();  //ジャンプ状態
     void UpdateFall();  //落ち状態
     void UpdateDash();  //ダッシュ状態
+    void UpdateWall();  //壁ずり状態
 
     void ApplyMovement(const Map& map);
-    void HandleCommonTransition();
+    void ApplyAirControl();
+    void HandleCommonTransition(const Map& map);
     void ResolveGroundCollision(const Map& map);
     void ResolveWallCollision(const Map& map);
-    void ResolveDashGroundSnap(const Map& map);
+    void ResolveCeilingCollision(const Map& map);
+    void ResolveGroundSnap(const Map& map);
     bool CheckOnGround(const Map& map);
+    bool IsTouchingWall(const Map& map, int dir);
 
 
     PlayerState state;  //player状態
@@ -47,6 +51,7 @@ private:
 
     //プレイヤータイマー
     int dashTimer;
+    int wallJumpLockTimer;
 
     //test value
     int test1;
