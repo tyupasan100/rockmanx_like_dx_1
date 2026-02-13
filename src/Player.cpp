@@ -2,24 +2,35 @@
 
 Player::Player()
 {
+    state = PlayerState::Idle;
+    facing = Facing::Right;
+
     x = 100.0f;
     y = 50.0f;
     prevY = 0.0;
     prevX = 0.0;
+    
     vx = 0.0f;
     sx = 0.0f;
     vy = 0.0f;
     move = 0;
-    state = PlayerState::Idle;
-    facing = Facing::Right;
+
     isGround = false;
     canDash = true;
+    canJump = false;
+    canWallJump = false;
+
     dashTimer = 0;
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
     wallJumpLockTimer = 0;
 }
 
 void Player::Update(const Map& map)
 {
+    UpdateJumpBuffer();
+
+    UpdateCoyoteTime();
 
     HandleCommonTransition(map);
 
@@ -40,6 +51,8 @@ void Player::Update(const Map& map)
 void Player::HandleCommonTransition(const Map& map)
 {
     move = 0;
+    canJump = (coyoteTimer > 0 && Input::Trigger(KEY_JUMP)) || (isGround && jumpBufferTimer > 0);
+    canWallJump = (coyoteTimer > 0 && Input::Trigger(KEY_JUMP)) || (state == PlayerState::Wall && jumpBufferTimer > 0);
 
     if (isGround && dashTimer <= 0 && !canDash)
     {
@@ -62,7 +75,7 @@ void Player::HandleCommonTransition(const Map& map)
             state = PlayerState::Run;
         }
 
-        if (isGround && canDash && Input::Press(KEY_DASH))
+        if (isGround && canDash && Input::Trigger(KEY_DASH))
         {
             dashTimer = DASH_DURATION;
             canDash = false;
@@ -75,15 +88,21 @@ void Player::HandleCommonTransition(const Map& map)
         canDash = true;
     }
 
-    if (isGround && Input::Trigger(KEY_JUMP))
+    if (state != PlayerState::Wall && canJump)
     {
+        canJump = false;
+        coyoteTimer = 0;
+        jumpBufferTimer = 0;
         dashTimer = 0;
         vy = -JUMP_SPEED;
         state = PlayerState::Jump;
     }
 
-    if (state == PlayerState::Wall && Input::Trigger(KEY_JUMP))
+    if (!isGround && canWallJump)
     {
+        canWallJump = false;
+        coyoteTimer = 0;
+        jumpBufferTimer = 0;
         vy = -WALL_JUMP_Y_SPEED;
         sx = WALL_JUMP_X_SPEED;
         vx = (facing == Facing::Right) ? -sx : sx;
@@ -132,23 +151,18 @@ void Player::ApplyMovement(const Map& map)
     {
         if (!isGround) {
             //空中での速度制御.
-            //壁ジャンプでのkeylock いらないかも.
+            //壁ジャンプでのkeylock.
             if (wallJumpLockTimer > 0)
             {
                 wallJumpLockTimer--;
             }
-            else
-            {
-                ApplyAirControl();
-            }
+            ApplyAirControl();
         }
         else
         {
             //地上での速度.
             vx = sx * move;
         }
-
-
         x += vx;
     }
 
@@ -158,9 +172,10 @@ void Player::ApplyMovement(const Map& map)
 
 void Player::ApplyAirControl()
 {
+    
     if (move != 0)
     {
-        vx += move * AIR_ACCEL * sx;
+        vx += move * AIR_ACCEL * sx * ((wallJumpLockTimer > 0)?AIR_CONTROL_RATE:1);
         vx = Clamp(vx, -1 * sx, sx);
     }
     else
@@ -407,6 +422,30 @@ bool Player::IsTouchingWall(const Map& map, int dir)
 
 }
 
+void Player::UpdateCoyoteTime()
+{
+    if (isGround)
+    {
+        coyoteTimer = COYOTE_TIME;
+    }
+    else if (coyoteTimer > 0)
+    {
+        coyoteTimer--;
+    }
+}
+
+void Player::UpdateJumpBuffer()
+{
+    if (Input::Trigger(KEY_JUMP))
+    {
+        jumpBufferTimer = JUMP_BUFFER_TIME;
+    }
+    else if (jumpBufferTimer > 0)
+    {
+        jumpBufferTimer--;
+    }
+}
+
 void Player::UpdateIdle()
 {
     sx = RUN_SPEED;
@@ -456,9 +495,13 @@ void Player::DrawPlayer() const
     else DrawString(20, 60, "false", GetColor(255, 255, 255));
     if (isGround)DrawString(20, 100, "true", GetColor(255, 255, 255));
     else DrawString(20, 100, "false", GetColor(255, 255, 255));
+    if (canJump)DrawString(20, 120, "true", GetColor(255, 255, 255));
+    else DrawString(20, 120, "false", GetColor(255, 255, 255));
     DrawFormatString(20, 80, GetColor(255, 255, 255) , "%d", dashTimer);
     DrawFormatString(60, 80, GetColor(255, 255, 255), "%d", test1);
     DrawFormatString(100, 80, GetColor(255, 255, 255), "%d", test2);
+    DrawFormatString(140, 80, GetColor(255, 255, 255), "%d", coyoteTimer);
+    DrawFormatString(180, 80, GetColor(255, 255, 255), "%d", jumpBufferTimer);
     
 
     DrawBox(static_cast<int>(x), static_cast<int>(y), static_cast<int>(x + 16), static_cast<int>(y + 16), GetColor(255, 255, 255), TRUE);

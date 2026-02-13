@@ -12,8 +12,8 @@ Map::Map()
     for (int x = 0; x < MAP_W; ++x)
         tiles[MAP_H - 3][x] = TileType::Block;
 
-    tiles[MAP_H - 6][2] = TileType::Block;
-    tiles[MAP_H - 6][3] = TileType::Block;
+    tiles[MAP_H - 9][4] = TileType::Block;
+    tiles[MAP_H - 9][3] = TileType::Block;
 
     tiles[MAP_H - 4][10] = TileType::Block;
     tiles[MAP_H - 4][11] = TileType::Block;
@@ -35,7 +35,7 @@ Map::Map()
     for (int y = 0; y < MAP_H; ++y)
         tiles[y][0] = TileType::Block;
 
-    for (int y = 0; y < MAP_H; ++y)
+    for (int y = 3; y < MAP_H; ++y)
         tiles[y][17] = TileType::Block;
 }
 
