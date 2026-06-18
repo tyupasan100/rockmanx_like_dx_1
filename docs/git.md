@@ -67,8 +67,17 @@ git pull
 git branch
 
 ## ブランチ（必要になったら）
+現ブランチの確認
+git branch
 
+ブランチの作成
+git checkout -b feature/xxx
+
+ブランチの移動
 git switch -c feature/xxx
+
+ブランチの削除
+git branch -D feature/xxx
 
 戻る：
 git switch main

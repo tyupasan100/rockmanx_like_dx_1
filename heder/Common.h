@@ -95,6 +95,22 @@ enum class PlayerState
     Wall
 };
 
+enum class MovementState
+{
+    Ground,
+    Air,
+    Wall
+};
+
+enum class ActionState
+{
+    None,
+    Run,
+    Jump,
+    Dash,
+    WallJump
+};
+
 enum class Facing 
 {
     Left,

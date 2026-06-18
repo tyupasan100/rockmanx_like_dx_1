@@ -3,6 +3,8 @@
 Player::Player()
 {
     state = PlayerState::Idle;
+    movementState = MovementState::Air;
+    actionState = ActionState::None;
     facing = Facing::Right;
 
     x = 100.0f;
@@ -28,31 +30,284 @@ Player::Player()
 
 void Player::Update(const Map& map)
 {
-    UpdateJumpBuffer();
+    isGround = CheckOnGround(map);
+    
+    UpdateInput();
+    UpdateTimer();
 
-    UpdateCoyoteTime();
+    UpdateMovementState(map);
+    UpdateActionState();
+    ApplyActionForces();
+    //TryJump();
+    //TryDash();
 
-    HandleCommonTransition(map);
+    //HandleCommonTransition(map);
 
-    switch (state)
-    {
-    case PlayerState::Idle: UpdateIdle();   break;
-    case PlayerState::Run:  UpdateRun();    break;
-    case PlayerState::Jump: UpdateJump();   break;
-    case PlayerState::Fall: UpdateFall();   break;
-    case PlayerState::Dash: UpdateDash();   break;
-    case PlayerState::Wall: UpdateWall();   break;
-
-    }
+    //switch (state)
+    //{
+    //case PlayerState::Idle: UpdateIdle();   break;
+    //case PlayerState::Run:  UpdateRun();    break;
+    //case PlayerState::Jump: UpdateJump();   break;
+    //case PlayerState::Fall: UpdateFall();   break;
+    //case PlayerState::Dash: UpdateDash();   break;
+    //case PlayerState::Wall: UpdateWall();   break;
+    //}
 
     ApplyMovement(map);
+}
+
+void Player::UpdateInput()
+{
+    move = 0;
+
+    if (Input::Press(KEY_LEFT))   move--;
+    if (Input::Press(KEY_RIGHT))  move++;
+
+    if (move < 0) facing = Facing::Left;
+    if (move > 0) facing = Facing::Right;
+}
+
+void Player::UpdateTimer()
+{
+    UpdateCoyoteTime();
+    
+    UpdateJumpBuffer();
+
+    if (wallJumpLockTimer > 0)
+        wallJumpLockTimer--;
+
+    if(dashTimer > 0)
+        dashTimer--;
+}
+
+void Player::UpdateCoyoteTime()
+{
+    if (isGround)
+    {
+        coyoteTimer = COYOTE_TIME;
+    }
+    else if (coyoteTimer > 0)
+    {
+        coyoteTimer--;
+    }
+}
+
+void Player::UpdateJumpBuffer()
+{
+    if (Input::Trigger(KEY_JUMP))
+    {
+        jumpBufferTimer = JUMP_BUFFER_TIME;
+    }
+    else if (jumpBufferTimer > 0)
+    {
+        jumpBufferTimer--;
+    }
+}
+
+void Player::UpdateMovementState(const Map& map)
+{
+    bool touchingWall = IsTouchingWall(map, move);
+
+    if (isGround)
+    {
+        movementState = MovementState::Ground;
+        //coyoteTimer = COYOTE_TIME;
+    }
+    else
+    {
+        if (touchingWall && vy > 0)
+        {
+            movementState = MovementState::Wall;
+            vy = WALL_SLIDE_SPEED;
+        }
+        else
+        {
+            movementState = MovementState::Air;
+        }
+    }
+}
+
+void Player::UpdateActionState()
+{
+    if ((actionState == ActionState::Dash && dashTimer <= 0)||
+        (actionState == ActionState::Run && move == 0))
+        actionState = ActionState::None;
+
+    if (move != 0)
+        actionState = ActionState::Run;
+
+    if (jumpBufferTimer > 0)
+    {
+        if (movementState == MovementState::Wall)
+        {
+            actionState == ActionState::WallJump;
+            jumpBufferTimer = 0;
+        }
+        else if (movementState == MovementState::Ground || coyoteTimer > 0)
+        {
+            actionState = ActionState::Jump;
+            jumpBufferTimer = 0;
+        }
+    }
+
+    if (Input::Trigger(KEY_DASH) &&
+        movementState == MovementState::Ground &&
+        actionState != ActionState::Dash)
+    {
+        actionState = ActionState::Dash;
+        dashTimer = DASH_DURATION;
+    }
+}
+
+void Player::ApplyActionForces()
+{
+    if (actionState == ActionState::Run || actionState == ActionState::None)
+    {
+        sx = RUN_SPEED;
+    }
+
+    if (actionState == ActionState::Jump)
+    {
+        vy = -JUMP_SPEED;
+        actionState = ActionState::None;
+    }
+
+    if (actionState == ActionState::WallJump)
+    {
+        vy = -WALL_JUMP_Y_SPEED;
+
+        sx = WALL_JUMP_X_SPEED;
+        vx = (facing == Facing::Right) ? -sx : sx;
+
+        wallJumpLockTimer = WALL_JUMP_LOCK_FRAMES;
+        actionState = ActionState::None;
+    }
+
+    if (actionState == ActionState::Dash)
+    {
+        if (dashTimer == DASH_DURATION)
+        {
+            //ダッシュのスピードを
+            sx = DASH_SPEED;
+            vx = (facing == Facing::Right) ? sx : -sx;
+        }
+    }
+
+
+}
+
+void Player::UpdateIdle()
+{
+    sx = RUN_SPEED;
+    if (!isGround) state = PlayerState::Fall;
+    else if (move != 0) state = PlayerState::Run;
+
+}
+
+void Player::UpdateRun()
+{
+    sx = RUN_SPEED;
+    if (!isGround)state = PlayerState::Fall;
+    else if (move == 0) state = PlayerState::Idle;
+}
+
+void Player::UpdateJump()
+{
+    if (vy >= 0) state = PlayerState::Fall;
+}
+
+void Player::UpdateFall()
+{
+    if (isGround) state = PlayerState::Idle;
+}
+
+void Player::UpdateDash()
+{
+    //最初にスピードを代入
+    if (dashTimer == DASH_DURATION)
+    {
+        //ダッシュのスピードを
+        sx = DASH_SPEED;
+        vx = (facing == Facing::Right) ? sx : -sx;
+    }
+
+    if (dashTimer <= 0)
+        state = isGround ? PlayerState::Idle : PlayerState::Fall;
+}
+
+void Player::UpdateWall()
+{
+    if (isGround) state = PlayerState::Idle;
+    sx = RUN_SPEED;
+}
+
+void Player::TryJump()
+{
+    if (jumpBufferTimer <= 0) return;
+
+    if (CanWallJump())
+    {
+        DoWallJump();
+        return;
+    }
+
+    if (CanGroundJump())
+    {
+        DoGroundJump();
+        return;
+    }
+}
+
+void Player::TryDash()
+{
+    if (!canDash) return;
+    if (!isGround)return;
+    if (!Input::Trigger(KEY_DASH))return;
+
+    dashTimer = DASH_DURATION;
+    canDash = false;
+
+    state = PlayerState::Dash;
+}
+
+bool Player::CanGroundJump()
+{
+    return isGround || coyoteTimer> 0;
+}
+
+bool Player::CanWallJump()
+{
+    return state == PlayerState::Wall;
+}
+
+void Player::DoGroundJump()
+{
+    vy = -JUMP_SPEED;
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
+    dashTimer = 0;
+    
+    state = PlayerState::Jump;
+}
+
+void Player::DoWallJump()
+{
+    coyoteTimer = 0;
+    jumpBufferTimer = 0;
+
+    vy = -WALL_JUMP_Y_SPEED;
+
+    sx = WALL_JUMP_X_SPEED;
+    vx = (facing == Facing::Right) ? -sx : sx;
+
+    wallJumpLockTimer = WALL_JUMP_LOCK_FRAMES;
+    state = PlayerState::Jump;
 }
 
 void Player::HandleCommonTransition(const Map& map)
 {
     move = 0;
-    canJump = (coyoteTimer > 0 && Input::Trigger(KEY_JUMP)) || (isGround && jumpBufferTimer > 0);
-    canWallJump = (coyoteTimer > 0 && Input::Trigger(KEY_JUMP)) || (state == PlayerState::Wall && jumpBufferTimer > 0);
+    
 
     if (isGround && dashTimer <= 0 && !canDash)
     {
@@ -61,10 +316,6 @@ void Player::HandleCommonTransition(const Map& map)
 
     if (state != PlayerState::Dash)
     {
-        if (Input::Press(KEY_LEFT))   move--;
-        if (Input::Press(KEY_RIGHT))  move++;
-        if (move < 0) facing = Facing::Left;
-        if (move > 0) facing = Facing::Right;
 
         if (isGround && (state == PlayerState::Fall || move == 0))
         {
@@ -128,22 +379,22 @@ void Player::HandleCommonTransition(const Map& map)
 
 void Player::ApplyMovement(const Map& map)
 {
-
-    if (!isGround && state != PlayerState::Wall) vy += GRAVITY;
+    
+    if (!isGround && movementState != MovementState::Wall) vy += GRAVITY;
     if (vy > MAX_FALL_SPEED) vy = MAX_FALL_SPEED;
 
     prevY = y;
     y += vy;
 
     //地面にいるかどうか.
-    isGround = CheckOnGround(map);
+    //isGround = CheckOnGround(map);
 
     ResolveCeilingCollision(map);
     ResolveGroundCollision(map);
     ResolveGroundSnap(map);
 
     prevX = x;
-    if (state == PlayerState::Dash)
+    if (actionState == ActionState::Dash)
     {
         x += vx;
     }
@@ -152,10 +403,6 @@ void Player::ApplyMovement(const Map& map)
         if (!isGround) {
             //空中での速度制御.
             //壁ジャンプでのkeylock.
-            if (wallJumpLockTimer > 0)
-            {
-                wallJumpLockTimer--;
-            }
             ApplyAirControl();
         }
         else
@@ -398,7 +645,7 @@ void Player::ResolveGroundSnap(const Map& map)
     //足と地面の差を取得.
     int delta = targetFootY - footY;
 
-    int snapHeight = (state == PlayerState::Dash) ? DASH_SNAP_HEIGHT : NORMAL_SNAP_HEIGHT;
+    int snapHeight = (actionState == ActionState::Dash) ? DASH_SNAP_HEIGHT : NORMAL_SNAP_HEIGHT;
 
     // 「少し下にある地面だけ」吸いつく.
     if (delta >= 0 && delta <= snapHeight)
@@ -422,86 +669,26 @@ bool Player::IsTouchingWall(const Map& map, int dir)
 
 }
 
-void Player::UpdateCoyoteTime()
-{
-    if (isGround)
-    {
-        coyoteTimer = COYOTE_TIME;
-    }
-    else if (coyoteTimer > 0)
-    {
-        coyoteTimer--;
-    }
-}
-
-void Player::UpdateJumpBuffer()
-{
-    if (Input::Trigger(KEY_JUMP))
-    {
-        jumpBufferTimer = JUMP_BUFFER_TIME;
-    }
-    else if (jumpBufferTimer > 0)
-    {
-        jumpBufferTimer--;
-    }
-}
-
-void Player::UpdateIdle()
-{
-    sx = RUN_SPEED;
-}
-
-void Player::UpdateRun()
-{
-    sx = RUN_SPEED;
-}
-
-void Player::UpdateJump()
-{
-
-}
-
-void Player::UpdateFall()
-{
-}
-
-void Player::UpdateDash()
-{
-    //最初にスピードを代入
-    if(dashTimer == DASH_DURATION)
-    {   
-        //ダッシュのスピードを
-        sx = DASH_SPEED;
-        vx = (facing == Facing::Right) ? sx : -sx;
-    }
-    
-    dashTimer--;
-}
-
-void Player::UpdateWall()
-{
-    sx = RUN_SPEED;
-}
-
 void Player::DrawPlayer() const
 {
-    if (state == PlayerState::Idle)DrawString(20, 40, "idle", GetColor(255, 255, 255));
-    if (state == PlayerState::Run)DrawString(20, 40, "run", GetColor(255, 255, 255));
-    if (state == PlayerState::Fall)DrawString(20, 40, "fall", GetColor(255, 255, 255));
-    if (state == PlayerState::Jump)DrawString(20, 40, "jump", GetColor(255, 255, 255));
-    if (state == PlayerState::Dash)DrawString(20, 40, "dash", GetColor(255, 255, 255));
-    if (state == PlayerState::Wall)DrawString(20, 40, "wall", GetColor(255, 255, 255));
-    if(canDash)DrawString(20, 60, "true", GetColor(255, 255, 255));
-    else DrawString(20, 60, "false", GetColor(255, 255, 255));
-    if (isGround)DrawString(20, 100, "true", GetColor(255, 255, 255));
-    else DrawString(20, 100, "false", GetColor(255, 255, 255));
-    if (canJump)DrawString(20, 120, "true", GetColor(255, 255, 255));
+    if (movementState == MovementState::Air)DrawString(20, 40, "Air", GetColor(255, 255, 255));
+    if (movementState == MovementState::Ground)DrawString(20, 40, "Ground", GetColor(255, 255, 255));
+    if (movementState == MovementState::Wall)DrawString(20, 40, "Wall", GetColor(255, 255, 255));
+    if (actionState == ActionState::None)DrawString(20, 60, "None", GetColor(255, 255, 255));
+    if (actionState == ActionState::Run)DrawString(20, 60, "Run", GetColor(255, 255, 255));
+    if (actionState == ActionState::Jump)DrawString(20, 60, "Jump", GetColor(255, 255, 255));
+    if (actionState == ActionState::Dash)DrawString(20, 60, "Dash", GetColor(255, 255, 255));
+    if (actionState == ActionState::WallJump)DrawString(20, 60, "WallJump", GetColor(255, 255, 255));
+    
+    if(canDash)DrawString(20, 80, "true", GetColor(255, 255, 255));
+    else DrawString(20, 80, "false", GetColor(255, 255, 255));
+    if (isGround)DrawString(20, 120, "true", GetColor(255, 255, 255));
     else DrawString(20, 120, "false", GetColor(255, 255, 255));
-    DrawFormatString(20, 80, GetColor(255, 255, 255) , "%d", dashTimer);
-    DrawFormatString(60, 80, GetColor(255, 255, 255), "%d", test1);
-    DrawFormatString(100, 80, GetColor(255, 255, 255), "%d", test2);
-    DrawFormatString(140, 80, GetColor(255, 255, 255), "%d", coyoteTimer);
-    DrawFormatString(180, 80, GetColor(255, 255, 255), "%d", jumpBufferTimer);
+    DrawFormatString(20, 100, GetColor(255, 255, 255) , "%d", dashTimer);
+    DrawFormatString(60, 100, GetColor(255, 255, 255), "%d", test1);
+    DrawFormatString(100, 100, GetColor(255, 255, 255), "%d", test2);
+    DrawFormatString(140, 100, GetColor(255, 255, 255), "%d", coyoteTimer);
+    DrawFormatString(180, 100, GetColor(255, 255, 255), "%d", jumpBufferTimer);
     
 
     DrawBox(static_cast<int>(x), static_cast<int>(y), static_cast<int>(x + 16), static_cast<int>(y + 16), GetColor(255, 255, 255), TRUE);

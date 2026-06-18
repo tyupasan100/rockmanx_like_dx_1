@@ -21,18 +21,35 @@ private:
 
     void ApplyMovement(const Map& map);
     void ApplyAirControl();
+    void ApplyActionForces();
     void HandleCommonTransition(const Map& map);
 
     void ResolveGroundCollision(const Map& map);
     void ResolveWallCollision(const Map& map);
     void ResolveCeilingCollision(const Map& map);
     void ResolveGroundSnap(const Map& map);
-    void UpdateCoyoteTime();
-    void UpdateJumpBuffer();
     bool CheckOnGround(const Map& map);
     bool IsTouchingWall(const Map& map, int dir);
 
+    void UpdateInput();
+    void UpdateTimer();
+    void UpdateMovementState(const Map& map);
+    void UpdateActionState();
+    void UpdateCoyoteTime();
+    void UpdateJumpBuffer();
 
+    void TryJump();
+
+    bool CanWallJump();
+    bool CanGroundJump();
+
+    void DoGroundJump();
+    void DoWallJump();
+
+    void TryDash();
+
+    MovementState movementState;
+    ActionState actionState;
     PlayerState state;  //playerèÛë‘.
     Facing facing;
 
