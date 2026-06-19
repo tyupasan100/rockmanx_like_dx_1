@@ -44,8 +44,6 @@ private:
     float sx;
     int move;
 
-    bool isGround;
-
     int dashTimer;
     int wallJumpLockTimer;
     int coyoteTimer;

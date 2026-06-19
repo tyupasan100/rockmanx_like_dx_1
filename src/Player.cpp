@@ -16,8 +16,6 @@ Player::Player()
     vy = 0.0f;
     move = 0;
 
-    isGround = false;
-
     dashTimer = 0;
     coyoteTimer = 0;
     jumpBufferTimer = 0;
@@ -26,12 +24,9 @@ Player::Player()
 
 void Player::Update(const Map& map)
 {
-    isGround = CheckOnGround(map);
-
     UpdateInput();
-    UpdateTimer();
-
     UpdateMovementState(map);
+    UpdateTimer();
     UpdateActionState();
     ApplyActionForces();
 
@@ -63,7 +58,7 @@ void Player::UpdateTimer()
 
 void Player::UpdateCoyoteTime()
 {
-    if (isGround)
+    if (movementState == MovementState::Ground)
     {
         coyoteTimer = COYOTE_TIME;
     }
@@ -87,23 +82,21 @@ void Player::UpdateJumpBuffer()
 
 void Player::UpdateMovementState(const Map& map)
 {
+    bool onGround     = CheckOnGround(map);
     bool touchingWall = IsTouchingWall(map, move);
 
-    if (isGround)
+    if (onGround)
     {
         movementState = MovementState::Ground;
     }
+    else if (touchingWall && vy > 0)
+    {
+        movementState = MovementState::Wall;
+        vy = WALL_SLIDE_SPEED;
+    }
     else
     {
-        if (touchingWall && vy > 0)
-        {
-            movementState = MovementState::Wall;
-            vy = WALL_SLIDE_SPEED;
-        }
-        else
-        {
-            movementState = MovementState::Air;
-        }
+        movementState = MovementState::Air;
     }
 }
 
@@ -173,7 +166,7 @@ void Player::ApplyActionForces()
 
 void Player::ApplyMovement(const Map& map)
 {
-    if (!isGround && movementState != MovementState::Wall) vy += GRAVITY;
+    if (movementState == MovementState::Air) vy += GRAVITY;
     if (vy > MAX_FALL_SPEED) vy = MAX_FALL_SPEED;
 
     prevY = y;
@@ -190,7 +183,7 @@ void Player::ApplyMovement(const Map& map)
     }
     else
     {
-        if (!isGround)
+        if (movementState != MovementState::Ground)
         {
             ApplyAirControl();
         }
@@ -299,7 +292,7 @@ void Player::ResolveGroundCollision(const Map& map)
     {
         y = static_cast<float>(targetFootY - PLAYER_HEIGHT);
         vy = 0;
-        isGround = true;
+        movementState = MovementState::Ground;
     }
 }
 
@@ -357,7 +350,7 @@ void Player::ResolveGroundSnap(const Map& map)
     {
         y += static_cast<float>(delta);
         vy = 0;
-        isGround = true;
+        movementState = MovementState::Ground;
     }
 }
 
@@ -389,8 +382,8 @@ void Player::DrawPlayer() const
     DrawFormatString(60,  100, GetColor(255, 255, 255), "%d", coyoteTimer);
     DrawFormatString(100, 100, GetColor(255, 255, 255), "%d", jumpBufferTimer);
 
-    if (isGround) DrawString(20, 120, "true",  GetColor(255, 255, 255));
-    else          DrawString(20, 120, "false", GetColor(255, 255, 255));
+    if (movementState == MovementState::Ground) DrawString(20, 120, "true",  GetColor(255, 255, 255));
+    else                                        DrawString(20, 120, "false", GetColor(255, 255, 255));
 
     DrawBox(static_cast<int>(x), static_cast<int>(y),
             static_cast<int>(x + PLAYER_WIDTH), static_cast<int>(y + PLAYER_HEIGHT),
