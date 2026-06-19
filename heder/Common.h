@@ -1,12 +1,12 @@
 #pragma once
 
 // =======================
-// ŠO•”ƒ‰ƒCƒuƒ‰ƒŠ
+// ï¿½Oï¿½ï¿½ï¿½ï¿½ï¿½Cï¿½uï¿½ï¿½ï¿½ï¿½
 // =======================
 #include "DxLib.h"
 
 // =======================
-// ƒeƒ“ƒvƒŒ[ƒgŠÖ”
+// ï¿½eï¿½ï¿½ï¿½vï¿½ï¿½ï¿½[ï¿½gï¿½Öï¿½
 // =======================
 template <typename T>
 
@@ -18,7 +18,7 @@ constexpr T Clamp(T value, T minVal, T maxVal)
 }
 
 // =======================
-// ’è”Eİ’è
+// ï¿½è”ï¿½Eï¿½İ’ï¿½
 // =======================
 //main.
 constexpr int SCREEN_WIDTH = 320;
@@ -27,7 +27,7 @@ constexpr int TARGET_FPS = 60;
 
 
 //graphics.
-constexpr int SCALE = 3;           //‰æ–Ê‚Ì®””{ .
+constexpr int SCALE = 3;           //ï¿½ï¿½Ê‚Ìï¿½ï¿½ï¿½ï¿½{ .
 
 
 //input.
@@ -73,7 +73,7 @@ constexpr int MAP_H = SCREEN_HEIGHT / TILE_SIZE;
 
 
 // =======================
-// —ñ‹“Œ^EŒ^’è‹`
+// ï¿½ñ‹“Œ^ï¿½Eï¿½^ï¿½ï¿½`
 // =======================
 //seane.
 enum class GameState
@@ -82,17 +82,6 @@ enum class GameState
     Playing,
     Pause,
     GameOver
-};
-
-//player.
-enum class PlayerState 
-{
-    Idle,
-    Run,
-    Jump,
-    Fall,
-    Dash,
-    Wall
 };
 
 enum class MovementState
@@ -127,7 +116,7 @@ enum class TileType
 };
 
 // =======================
-// ©ìƒNƒ‰ƒX
+// ï¿½ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½X
 // =======================
 #include "Player.h"
 #include "Graphics.h"
